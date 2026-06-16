@@ -5,6 +5,9 @@ import '../../widgets/app_logo.dart';
 import '../../widgets/vm_listener.dart';
 import 'recipe_match_card.dart';
 
+
+/// Displays the user's favorited recipes as a scrollable list,
+/// with an empty-state message when there are none.
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
 
@@ -82,4 +85,4 @@ class FavoritesScreen extends StatelessWidget {
   }
 }
 
-//}
+

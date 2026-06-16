@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../screens/main/main_shell.dart';
+
 
 class ShelfBottomNav extends StatelessWidget {
   final int currentIndex;

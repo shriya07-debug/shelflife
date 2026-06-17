@@ -9,7 +9,7 @@ import '../../widgets/main_app_bar.dart';
 import '../misc/edit_profile_screen.dart';
 import '../misc/privacy_screen.dart';
 import 'package:provider/provider.dart';
-import '../auth/auth_gate.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

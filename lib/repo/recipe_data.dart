@@ -38,7 +38,7 @@ class RecipeData {
       title: 'Lemon Garlic Stir-Fry',
       time: '20 mins', timeMinutes: 20,
       difficulty: 'Easy',
-      imageAsset: 'assets/recipes/lemon_garlic_stirfry.png',
+      imageAsset: 'assets/recipes/lemon_garlic_stir-fry.png',
       description: 'Quick stir-fry with bright lemon and aromatic garlic.',
       ingredients: ['Chicken Breast', 'Bell Peppers', 'Garlic', 'Lemons', 'Soy Sauce'],
       tags: ['Quick', 'High Protein'],

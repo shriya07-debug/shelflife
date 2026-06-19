@@ -38,7 +38,7 @@ class Services {
   /// Shared barcode->product cache (stateless; no per-user binding).
   static final ProductRepo products = ProductRepoFirebaseImpl();
 
-  /// Firebase impls expose these for Piece 5 (live-sync VM subscriptions).
+  /// Firebase implies expose these for Piece 5 (live-sync VM subscriptions).
   static PantryRepoFirebaseImpl? get pantryImpl => _pantry;
   static ShoppingRepoFirebaseImpl? get shoppingImpl => _shopping;
   static FavoritesRepoFirebaseImpl? get favoritesImpl => _favorites;

@@ -5,7 +5,7 @@ import 'favorites_repo.dart';
 import 'seed_data.dart';
 
 /// Firestore-backed FavoritesRepo, scoped to users/{uid}/favorites.
-/// Each favorited recipe is a doc whose id is the recipeId.
+/// Each favorite recipe is a doc whose id is the recipeId.
 ///
  class FavoritesRepoFirebaseImpl implements FavoritesRepo {
   FavoritesRepoFirebaseImpl(this.uid, {FirebaseFirestore? firestore})

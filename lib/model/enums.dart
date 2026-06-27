@@ -1,4 +1,5 @@
 /// All app-wide enums in one file.
+library;
 
 enum ExpiryStatus { safe, soon, expired }
 

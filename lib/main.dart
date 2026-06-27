@@ -16,7 +16,7 @@ Future<void> main() async {
   await Services.init();
   // Restore saved dark-mode preference
   themeController.value =
-      Services.settings.darkMode ? ThemeMode.dark : ThemeMode.light;
+  Services.settings.darkMode ? ThemeMode.dark : ThemeMode.light;
   runApp(const ShelfLifeApp());
 }
 

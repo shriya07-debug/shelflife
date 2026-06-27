@@ -51,7 +51,7 @@ class PantryItem {
 
   String get expiryLabel {
     final d = daysUntilExpiry;
-    final months = const [
+    const months = [
       'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec',
     ];
     final dateStr = '${months[expiryDate.month - 1]} ${expiryDate.day}';

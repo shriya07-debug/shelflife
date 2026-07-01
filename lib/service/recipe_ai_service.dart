@@ -3,6 +3,7 @@ import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter/material.dart';
 import '../model/recipe.dart';
 
+//code fixed again
 class RecipeAiService {
   final _model = FirebaseAI.googleAI().generativeModel(
     model: 'gemini-3.1-flash-lite',

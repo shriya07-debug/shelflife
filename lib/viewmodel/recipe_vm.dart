@@ -63,6 +63,7 @@ class RecipeVM extends ChangeNotifier {
     }).toList();
   }
 
+  //Gemini API
   // ---- AI Recipe Generation -------------------------------------------
   final _aiService = RecipeAiService();
   bool isGeneratingAi = false;

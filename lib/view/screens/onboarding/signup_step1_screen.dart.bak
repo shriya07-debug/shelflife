@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../constants/app_colors.dart';
 import '../../widgets/onboarding_header.dart';
 import 'signup_step2_screen.dart';
-import 'signup_draft.dart';
 
 class SignupStep1Screen extends StatefulWidget {
   const SignupStep1Screen({super.key});
@@ -201,18 +200,11 @@ class _SignupStep1ScreenState extends State<SignupStep1Screen> {
                     }),
                     const SizedBox(height: 28),
                     ElevatedButton(
-                      onPressed: () {
-                        SignupDraft.i
-                          ..name = _nameCtrl.text.trim()
-                          ..email = _emailCtrl.text.trim()
-                          ..password = _passCtrl.text
-                          ..birthday = _bdayCtrl.text.trim();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const SignupStep2Screen()),
-                        );
-                      },
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const SignupStep2Screen()),
+                      ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

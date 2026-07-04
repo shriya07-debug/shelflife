@@ -4,64 +4,89 @@ import 'auth_repo.dart';
 class AuthRepoImpl implements AuthRepo {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  @override
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  AuthUser? _map(User? u) => u == null
+      ? null
+      : AuthUser(uid: u.uid, email: u.email, displayName: u.displayName);
 
   @override
-  User? get currentUser => _auth.currentUser;
+  Stream<AuthUser?> authStateChanges() => _auth.authStateChanges().map(_map);
 
   @override
-  Future<User?> signUp({
-    required String email,
-    required String password,
-    String? displayName,
-  }) async {
-    final cred = await _auth.createUserWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    if (displayName != null && displayName.trim().isNotEmpty) {
-      await cred.user?.updateDisplayName(displayName.trim());
-      await cred.user?.reload();
+  AuthUser? get currentUser => _map(_auth.currentUser);
+
+  @override
+  Future<void> signIn({required String email, required String password}) async {
+    try {
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_friendly(e));
     }
-    return _auth.currentUser;
   }
 
   @override
-  Future<User?> signIn({
+  Future<void> signUp({
     required String email,
     required String password,
+    required String name,
   }) async {
-    final cred = await _auth.signInWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    return cred.user;
+    try {
+      final cred = await _auth.createUserWithEmailAndPassword(
+          email: email, password: password);
+      final n = name.trim();
+      if (n.isNotEmpty) {
+        await cred.user?.updateDisplayName(n);
+        await cred.user?.reload();
+      }
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_friendly(e));
+    }
+  }
+
+  @override
+  Future<void> signOut() => _auth.signOut();
+
+  @override
+  Future<void> deleteAccount() async {
+    final u = _auth.currentUser;
+    if (u == null) return;
+    try {
+      await u.delete();
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_friendly(e));
+    }
   }
 
   @override
   Future<void> sendPasswordReset(String email) async {
-    await _auth.sendPasswordResetEmail(email: email.trim());
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_friendly(e));
+    }
   }
 
-  @override
-  Future<void> updateDisplayName(String name) async {
-    await _auth.currentUser?.updateDisplayName(name.trim());
-    await _auth.currentUser?.reload();
-  }
-
-  @override
-  Future<void> updatePassword(String newPassword) async {
-    await _auth.currentUser?.updatePassword(newPassword);
-  }
-
-  @override
-  Future<void> signOut() async {
-    await _auth.signOut();
-  }
-
-  @override
-  Future<void> deleteAccount() async {
-    await _auth.currentUser?.delete();
+  String _friendly(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'invalid-email':
+        return 'That email address looks invalid.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'user-not-found':
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Incorrect email or password.';
+      case 'email-already-in-use':
+        return 'An account already exists for that email.';
+      case 'weak-password':
+        return 'Password should be at least 6 characters.';
+      case 'network-request-failed':
+        return 'Network error. Check your connection.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      case 'requires-recent-login':
+        return 'Please sign in again to complete this action.';
+      default:
+        return e.message ?? 'Authentication failed. Please try again.';
+    }
   }
 }

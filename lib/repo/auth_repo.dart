@@ -1,24 +1,30 @@
-import 'package:firebase_auth/firebase_auth.dart';
+/// Framework-agnostic snapshot of the signed-in user, so the UI/VM layer
+/// never has to import FirebaseAuth directly.
+class AuthUser {
+  final String uid;
+  final String? email;
+  final String? displayName;
+  const AuthUser({required this.uid, this.email, this.displayName});
+}
 
-/// Auth contract used by AuthVM.
+/// Thrown for expected auth failures. [message] is safe to show to users.
+class AuthException implements Exception {
+  final String message;
+  AuthException(this.message);
+  @override
+  String toString() => message;
+}
+
 abstract class AuthRepo {
-  Stream<User?> get authStateChanges;
-  User? get currentUser;
-
-  Future<User?> signUp({
+  Stream<AuthUser?> authStateChanges();
+  AuthUser? get currentUser;
+  Future<void> signIn({required String email, required String password});
+  Future<void> signUp({
     required String email,
     required String password,
-    String? displayName,
+    required String name,
   });
-
-  Future<User?> signIn({
-    required String email,
-    required String password,
-  });
-
-  Future<void> sendPasswordReset(String email);
-  Future<void> updateDisplayName(String name);
-  Future<void> updatePassword(String newPassword);
   Future<void> signOut();
   Future<void> deleteAccount();
+  Future<void> sendPasswordReset(String email);
 }

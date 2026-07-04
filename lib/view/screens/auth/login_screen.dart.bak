@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../constants/app_colors.dart';
 import '../../widgets/app_logo.dart';
 import '../onboarding/signup_step1_screen.dart';
-import '../../../viewmodel/auth_vm.dart';
+import '../main/main_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,37 +12,12 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _obscure = true;
-  bool _busy = false;
-  final _emailCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
 
-  @override
-  void dispose() {
-    _emailCtrl.dispose();
-    _passCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _login() async {
-    if (_busy) return;
-    final email = _emailCtrl.text.trim();
-    final pass = _passCtrl.text;
-    if (email.isEmpty || pass.isEmpty) {
-      _snack('Please enter your email and password.');
-      return;
-    }
-    setState(() => _busy = true);
-    final error = await authVM.signIn(email, pass);
-    if (!mounted) return;
-    setState(() => _busy = false);
-    if (error != null) _snack(error);
-    // On success, AuthGate swaps to the main app automatically.
-  }
-
-  void _soon() => _snack('Social sign-in is coming soon. Use email for now.');
-
-  void _snack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  void _login() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const MainShell()),
+    );
   }
 
   @override
@@ -84,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   children: [
                     OutlinedButton.icon(
-                      onPressed: _soon,
+                      onPressed: _login,
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: AppColors.divider(context)),
                         foregroundColor: AppColors.textPri(context),
@@ -95,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton.icon(
-                      onPressed: _soon,
+                      onPressed: _login,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.facebookBlue,
                       ),
@@ -131,10 +106,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: _emailCtrl,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         prefixIcon: Icon(Icons.person_outline),
                         hintText: 'Enter your email',
                       ),
@@ -159,7 +132,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     TextField(
-                      controller: _passCtrl,
                       obscureText: _obscure,
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.lock_outline),

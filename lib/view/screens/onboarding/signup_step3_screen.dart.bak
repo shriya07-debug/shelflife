@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../constants/app_colors.dart';
 import '../../../constants/app_categories.dart';
 import '../../widgets/onboarding_header.dart';
-import '../../../viewmodel/auth_vm.dart';
-import 'signup_draft.dart';
+import '../main/main_shell.dart';
 
 class SignupStep3Screen extends StatefulWidget {
   const SignupStep3Screen({super.key});
@@ -232,28 +231,11 @@ class _SignupStep3ScreenState extends State<SignupStep3Screen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () async {
-                        final d = SignupDraft.i;
-                        if (d.email.isEmpty || d.password.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text(
-                                    'Please restart signup from step 1.')),
-                          );
-                          return;
-                        }
-                        final error =
-                            await authVM.signUp(d.email, d.password, d.name);
-                        if (!context.mounted) return;
-                        if (error != null) {
-                          ScaffoldMessenger.of(context)
-                              .showSnackBar(SnackBar(content: Text(error)));
-                          return;
-                        }
-                        SignupDraft.i.clear();
-                        Navigator.of(context)
-                            .popUntil((route) => route.isFirst);
-                      },
+                      onPressed: () => Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const MainShell()),
+                        (_) => false,
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryDark,
                       ),

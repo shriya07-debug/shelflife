@@ -6,6 +6,7 @@ import '../../../viewmodel/profile_vm.dart';
 import '../../../viewmodel/pantry_vm.dart';
 import '../../widgets/main_app_bar.dart';
 import '../../widgets/vm_listener.dart';
+import '../auth/login_screen.dart';
 import '../misc/edit_profile_screen.dart';
 import '../misc/privacy_screen.dart';
 
@@ -151,10 +152,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryDark),
-            onPressed: () async {
+            onPressed: () {
+              profileVM.logout();
               Navigator.pop(context);
-              await profileVM.logout();
-              // AuthGate returns to the login screen automatically.
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (_) => false,
+              );
             },
             child: const Text('Log out'),
           ),
@@ -178,14 +183,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () async {
-              final messenger = ScaffoldMessenger.of(context);
-              final navigator = Navigator.of(context);
-              final error = await profileVM.deleteAccount();
-              navigator.pop();
-              if (error != null) {
-                messenger.showSnackBar(SnackBar(content: Text(error)));
+              await profileVM.deleteAccount();
+              if (context.mounted) {
+                Navigator.pop(context);
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (_) => false,
+                );
               }
-              // On success, AuthGate returns to the login screen automatically.
             },
             child: const Text('Delete'),
           ),

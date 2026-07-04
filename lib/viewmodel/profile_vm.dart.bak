@@ -4,7 +4,6 @@ import '../view/theme/theme_controller.dart';
 import 'pantry_vm.dart';
 import 'shopping_vm.dart';
 import 'recipe_vm.dart';
-import 'auth_vm.dart';
 
 class ProfileVM extends ChangeNotifier {
   bool get darkMode => Services.settings.darkMode;
@@ -15,16 +14,13 @@ class ProfileVM extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Logout — signs the user out of Firebase. Local data is left intact.
-  Future<void> logout() async {
-    await authVM.signOut();
+  /// Logout — soft sign-out. No data wipe.
+  void logout() {
+    // No-op besides UI nav. (Auth integration would clear session here.)
   }
 
-  /// Delete account — removes the Firebase user, then wipes local data.
-  /// Returns null on success or a user-facing error message on failure.
-  Future<String?> deleteAccount() async {
-    final error = await authVM.deleteAccount();
-    if (error != null) return error;
+  /// Delete account — wipes Hive boxes.
+  Future<void> deleteAccount() async {
     await Services.pantry.clear();
     await Services.shopping.clear();
     await Services.favorites.clear();
@@ -33,7 +29,6 @@ class ProfileVM extends ChangeNotifier {
     shoppingVM.notifyListeners();
     recipeVM.notifyListeners();
     notifyListeners();
-    return null;
   }
 
   Future<void> resetDemoData() async {

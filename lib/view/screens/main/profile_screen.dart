@@ -4,6 +4,7 @@ import '../../../constants/app_colors.dart';
 import '../../../constants/app_strings.dart';
 import '../../../viewmodel/profile_vm.dart';
 import '../../../viewmodel/pantry_vm.dart';
+import '../../../viewmodel/auth_vm.dart';
 import '../../widgets/main_app_bar.dart';
 import '../../widgets/vm_listener.dart';
 import '../misc/edit_profile_screen.dart';
@@ -32,7 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _avatar(),
               const SizedBox(height: 12),
               Center(
-                child: Text(AppStrings.userName,
+                child: Text(authVM.currentUser?.displayName ?? AppStrings.userName,
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -40,7 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     )),
               ),
               Center(
-                child: Text(AppStrings.userEmail,
+                child: Text(authVM.currentUser?.email ?? AppStrings.userEmail,
                     style: TextStyle(
                         color: AppColors.textSec(context), fontSize: 14)),
               ),

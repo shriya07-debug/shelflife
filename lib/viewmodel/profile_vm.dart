@@ -23,12 +23,13 @@ class ProfileVM extends ChangeNotifier {
   /// Delete account — removes the Firebase user, then wipes local data.
   /// Returns null on success or a user-facing error message on failure.
   Future<String?> deleteAccount() async {
-    final error = await authVM.deleteAccount();
-    if (error != null) return error;
+    // Clear the user's cloud data while still authenticated, THEN delete the
+    // auth account (Firestore writes require a live, matching session).
     await Services.pantry.clear();
     await Services.shopping.clear();
     await Services.favorites.clear();
-    await Services.settings.clearSeeded();
+    final error = await authVM.deleteAccount();
+    if (error != null) return error;
     pantryVM.notifyListeners();
     shoppingVM.notifyListeners();
     recipeVM.notifyListeners();

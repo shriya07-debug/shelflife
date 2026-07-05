@@ -12,6 +12,7 @@ class PantryItem {
   final DateTime? purchaseDate;
   final String? imageAsset;
   final String? imagePath;
+  final String? imageUrl;
   final String? notes;
   final StorageLocation storage;
   final bool favorite;
@@ -28,6 +29,7 @@ class PantryItem {
     this.purchaseDate,
     this.imageAsset,
     this.imagePath,
+    this.imageUrl,
     this.notes,
     this.storage = StorageLocation.fridge,
     this.favorite = false,
@@ -94,6 +96,7 @@ class PantryItem {
         'purchaseDate': purchaseDate?.toIso8601String(),
         'imageAsset': imageAsset,
         'imagePath': imagePath,
+        'imageUrl': imageUrl,
         'notes': notes,
         'storage': storage.serialized,
         'favorite': favorite,
@@ -114,6 +117,7 @@ class PantryItem {
             : null,
         imageAsset: m['imageAsset'] as String?,
         imagePath: m['imagePath'] as String?,
+        imageUrl: m['imageUrl'] as String?,
         notes: m['notes'] as String?,
         storage: StorageLocationX.parse(m['storage'] as String?),
         favorite: (m['favorite'] as bool?) ?? false,
@@ -136,6 +140,7 @@ class PantryItem {
     DateTime? addedDate,
     DateTime? purchaseDate,
     String? imageAsset,
+    String? imageUrl,
     String? imagePath,
     String? notes,
     StorageLocation? storage,
@@ -152,6 +157,7 @@ class PantryItem {
         addedDate: addedDate ?? this.addedDate,
         purchaseDate: purchaseDate ?? this.purchaseDate,
         imageAsset: imageAsset ?? this.imageAsset,
+        imageUrl: imageUrl ?? this.imageUrl,
         imagePath: imagePath ?? this.imagePath,
         notes: notes ?? this.notes,
         storage: storage ?? this.storage,

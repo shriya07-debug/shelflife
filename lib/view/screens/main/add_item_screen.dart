@@ -18,6 +18,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   int _mode = 0;
   final _nameCtrl = TextEditingController();
   final _qtyCtrl = TextEditingController(text: '1');
+  final _imageUrlCtrl = TextEditingController();
   String _unitCode = 'unit';
   String _category = 'Other';
   DateTime? _expiry;
@@ -28,6 +29,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   void dispose() {
     _nameCtrl.dispose();
     _qtyCtrl.dispose();
+    _imageUrlCtrl.dispose();
     super.dispose();
   }
 
@@ -78,6 +80,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
       addedDate: now,
       purchaseDate: _purchase,
       storage: _storage,
+      imageUrl: _imageUrlCtrl.text.trim().isEmpty
+          ? null
+          : _imageUrlCtrl.text.trim(),
     );
     // Duplicate check
     final dup = pantryVM.findDuplicate(name);
@@ -137,6 +142,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
   void _reset() {
     _nameCtrl.clear();
+    _imageUrlCtrl.clear();
     _qtyCtrl.text = '1';
     setState(() {
       _expiry = null;
@@ -358,6 +364,14 @@ class _AddItemScreenState extends State<AddItemScreen> {
             controller: _nameCtrl,
             decoration:
                 const InputDecoration(hintText: 'e.g. Fresh Chicken Breast'),
+          ),
+          const SizedBox(height: 14),
+          _formLabel(context, 'Image URL (optional)'),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _imageUrlCtrl,
+            keyboardType: TextInputType.url,
+            decoration: const InputDecoration(hintText: 'https://.../photo.jpg'),
           ),
           const SizedBox(height: 14),
           Row(

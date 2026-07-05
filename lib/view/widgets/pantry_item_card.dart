@@ -89,20 +89,29 @@ class PantryItemCard extends StatelessWidget {
         width: 60,
         height: 60,
         color: AppColors.chipBg(context),
-        child: item.imageAsset != null
-            ? Image.asset(
-                item.imageAsset!,
+        child: item.imageUrl != null
+            ? Image.network(
+                item.imageUrl!,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Center(
-                  child: Text('img',
-                      style: TextStyle(
-                          color: AppColors.textMut(context), fontSize: 12)),
+                  child: Icon(Icons.broken_image_outlined,
+                      color: AppColors.textMut(context), size: 24),
                 ),
               )
-            : Center(
-                child: Icon(Icons.image_not_supported_outlined,
-                    color: AppColors.textMut(context), size: 24),
-              ),
+            : item.imageAsset != null
+                ? Image.asset(
+                    item.imageAsset!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Center(
+                      child: Text('img',
+                          style: TextStyle(
+                              color: AppColors.textMut(context), fontSize: 12)),
+                    ),
+                  )
+                : Center(
+                    child: Icon(Icons.image_not_supported_outlined,
+                        color: AppColors.textMut(context), size: 24),
+                  ),
       ),
     );
   }

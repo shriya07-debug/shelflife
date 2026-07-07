@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../constants/app_colors.dart';
 import '../../widgets/app_logo.dart';
 import '../onboarding/signup_step1_screen.dart';
+import 'forgot_password_screen.dart';
 import '../../../viewmodel/auth_vm.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -149,12 +150,20 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontSize: 14,
                               color: AppColors.textPri(context),
                             )),
-                        const Text('Forgot Password?',
-                            style: TextStyle(
-                              color: AppColors.primaryDark,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            )),
+                        GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    const ForgotPasswordScreen()),
+                          ),
+                          child: const Text('Forgot Password?',
+                              style: TextStyle(
+                                color: AppColors.primaryDark,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              )),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),

@@ -1,5 +1,4 @@
-/// Carries signup form data from step 1 to the account-creation call in
-/// step 3. Intentionally tiny; cleared once the account is created.
+/// Carries signup form data from step 1 through to account creation in step 3.
 class SignupDraft {
   SignupDraft._();
   static final SignupDraft i = SignupDraft._();
@@ -8,11 +7,15 @@ class SignupDraft {
   String email = '';
   String password = '';
   String birthday = '';
+  List<String> dietary = [];
+  List<String> allergies = [];
 
   void clear() {
     name = '';
     email = '';
     password = '';
     birthday = '';
+    dietary = [];
+    allergies = [];
   }
 }

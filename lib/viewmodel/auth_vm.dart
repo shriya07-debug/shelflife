@@ -22,6 +22,12 @@ class AuthVM extends ChangeNotifier {
 
   Future<void> signOut() => _repo.signOut();
 
+  Future<String?> updateDisplayName(String name) =>
+      _run(() => _repo.updateDisplayName(name));
+
+  Future<String?> changePassword(String current, String next) =>
+      _run(() => _repo.changePassword(current, next));
+
   Future<String?> deleteAccount() => _run(() => _repo.deleteAccount());
 
   Future<String?> sendPasswordReset(String email) =>

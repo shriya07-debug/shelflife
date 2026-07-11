@@ -25,6 +25,8 @@ abstract class AuthRepo {
     required String name,
   });
   Future<void> signOut();
+  Future<void> updateDisplayName(String name);
+  Future<void> changePassword(String currentPassword, String newPassword);
   Future<void> deleteAccount();
   Future<void> sendPasswordReset(String email);
 }

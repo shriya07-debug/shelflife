@@ -7,6 +7,10 @@ import 'recipe_vm.dart';
 import 'auth_vm.dart';
 
 class ProfileVM extends ChangeNotifier {
+  /// Forces listeners to rebuild after Services.profile is updated directly
+  /// (profile data isn't cached on this VM itself).
+  void refresh() => notifyListeners();
+
   bool get darkMode => Services.settings.darkMode;
 
   Future<void> setDarkMode(bool v) async {

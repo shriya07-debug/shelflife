@@ -46,6 +46,33 @@ class AuthRepoImpl implements AuthRepo {
   Future<void> signOut() => _auth.signOut();
 
   @override
+  Future<void> updateDisplayName(String name) async {
+    final u = _auth.currentUser;
+    if (u == null) return;
+    try {
+      await u.updateDisplayName(name.trim());
+      await u.reload();
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_friendly(e));
+    }
+  }
+
+  @override
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    final u = _auth.currentUser;
+    final email = u?.email;
+    if (u == null || email == null) throw AuthException('Not signed in.');
+    try {
+      final cred = EmailAuthProvider.credential(
+          email: email, password: currentPassword);
+      await u.reauthenticateWithCredential(cred);
+      await u.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_friendly(e));
+    }
+  }
+
+  @override
   Future<void> deleteAccount() async {
     final u = _auth.currentUser;
     if (u == null) return;

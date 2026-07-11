@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../constants/app_colors.dart';
-import '../../../constants/app_strings.dart';
 import '../../widgets/app_logo.dart';
+import '../../../repo/services.dart';
+import '../../../repo/profile_repo.dart';
+import '../../../viewmodel/auth_vm.dart';
+import '../../../viewmodel/profile_vm.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -11,15 +14,17 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _nameCtrl =
-      TextEditingController(text: AppStrings.userName);
+      TextEditingController(text: Services.profile.profile.name);
   final _emailCtrl =
-      TextEditingController(text: AppStrings.userEmail);
-  final _phoneCtrl = TextEditingController(text: '+977 98XXXXXXXX');
+      TextEditingController(text: authVM.currentUser?.email ?? '');
+  final _phoneCtrl = TextEditingController(text: Services.profile.profile.phone);
   final _bioCtrl =
-      TextEditingController(text: 'Trying to waste less and cook more.');
+      TextEditingController(text: Services.profile.profile.bio);
 
   bool _currentObscure = true;
   bool _newObscure = true;
+  final _currentPassCtrl = TextEditingController();
+  final _newPassCtrl = TextEditingController();
 
   @override
   void dispose() {
@@ -27,6 +32,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _emailCtrl.dispose();
     _phoneCtrl.dispose();
     _bioCtrl.dispose();
+    _currentPassCtrl.dispose();
+    _newPassCtrl.dispose();
     super.dispose();
   }
 
@@ -104,7 +111,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 _field('Full Name', _nameCtrl, Icons.person_outline),
                 const SizedBox(height: 12),
                 _field('Email Address', _emailCtrl, Icons.email_outlined,
-                    type: TextInputType.emailAddress),
+                    type: TextInputType.emailAddress, readOnly: true),
                 const SizedBox(height: 12),
                 _field('Phone Number', _phoneCtrl, Icons.phone_outlined,
                     type: TextInputType.phone),
@@ -123,6 +130,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: Column(
               children: [
                 TextField(
+                  controller: _currentPassCtrl,
                   obscureText: _currentObscure,
                   decoration: InputDecoration(
                     hintText: 'Current password',
@@ -138,6 +146,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  controller: _newPassCtrl,
                   obscureText: _newObscure,
                   decoration: InputDecoration(
                     hintText: 'New password',
@@ -156,11 +165,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           const SizedBox(height: 28),
 
           ElevatedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Profile saved.')),
-              );
-              Navigator.pop(context);
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final navigator = Navigator.of(context);
+              final name = _nameCtrl.text.trim();
+              final current = Services.profile.profile;
+              await Services.profile.save(UserProfile(
+                name: name.isEmpty ? current.name : name,
+                dietary: current.dietary,
+                allergies: current.allergies,
+                phone: _phoneCtrl.text.trim(),
+                bio: _bioCtrl.text.trim(),
+              ));
+              if (name.isNotEmpty) await authVM.updateDisplayName(name);
+              final newPass = _newPassCtrl.text;
+              if (newPass.isNotEmpty) {
+                final err =
+                    await authVM.changePassword(_currentPassCtrl.text, newPass);
+                if (err != null) {
+                  messenger.showSnackBar(SnackBar(content: Text(err)));
+                  return;
+                }
+              }
+              profileVM.refresh();
+              messenger
+                  .showSnackBar(const SnackBar(content: Text('Profile saved.')));
+              navigator.pop();
             },
             child: const Text('Save Changes'),
           ),
@@ -198,9 +228,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _field(String hint, TextEditingController c, IconData icon,
-      {TextInputType type = TextInputType.text, int maxLines = 1}) {
+      {TextInputType type = TextInputType.text,
+      int maxLines = 1,
+      bool readOnly = false}) {
     return TextField(
       controller: c,
+      readOnly: readOnly,
       keyboardType: type,
       maxLines: maxLines,
       decoration: InputDecoration(

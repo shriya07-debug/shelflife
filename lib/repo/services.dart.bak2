@@ -12,8 +12,6 @@ import 'recipe_repo.dart';
 import 'recipe_repo_impl.dart';
 import 'product_repo.dart';
 import 'product_repo_firebase_impl.dart';
-import 'profile_repo.dart';
-import 'profile_repo_firebase_impl.dart';
 
 /// Service locator.
 ///  • [settings] (device-level, Hive) and [recipes] (static) are ready after
@@ -29,12 +27,10 @@ class Services {
   static PantryRepoFirebaseImpl? _pantry;
   static ShoppingRepoFirebaseImpl? _shopping;
   static FavoritesRepoFirebaseImpl? _favorites;
-  static ProfileRepoFirebaseImpl? _profile;
 
   static PantryRepo get pantry => _pantry!;
   static ShoppingRepo get shopping => _shopping!;
   static FavoritesRepo get favorites => _favorites!;
-  static ProfileRepo get profile => _profile!;
   /// Shared barcode->product cache (stateless; no per-user binding).
   static final ProductRepo products = ProductRepoFirebaseImpl();
 
@@ -61,12 +57,10 @@ class Services {
     final p = PantryRepoFirebaseImpl(uid);
     final s = ShoppingRepoFirebaseImpl(uid);
     final f = FavoritesRepoFirebaseImpl(uid);
-    final pr = ProfileRepoFirebaseImpl(uid);
-    await Future.wait([p.init(), s.init(), f.init(), pr.init()]);
+    await Future.wait([p.init(), s.init(), f.init()]);
     _pantry = p;
     _shopping = s;
     _favorites = f;
-    _profile = pr;
 
     final flags = FirebaseFirestore.instance
         .collection('users')
@@ -87,11 +81,9 @@ class Services {
     _pantry?.dispose();
     _shopping?.dispose();
     _favorites?.dispose();
-    _profile?.dispose();
     _pantry = null;
     _shopping = null;
     _favorites = null;
-    _profile = null;
   }
 
   /// Reset the CURRENT user's cloud data back to demo defaults.

@@ -23,11 +23,13 @@ class ProfileRepoFirebaseImpl implements ProfileRepo {
       dietary: ((m['dietary'] as List?) ?? const []).map((e) => '$e').toList(),
       allergies:
           ((m['allergies'] as List?) ?? const []).map((e) => '$e').toList(),
+      phone: (m['phone'] as String?) ?? '',
+      bio: (m['bio'] as String?) ?? '',
     );
   }
 
   static Map<String, dynamic> _toMap(UserProfile p) =>
-      {'name': p.name, 'dietary': p.dietary, 'allergies': p.allergies};
+      {'name': p.name, 'dietary': p.dietary, 'allergies': p.allergies, 'phone': p.phone, 'bio': p.bio};
 
   @override
   Future<void> init() async {

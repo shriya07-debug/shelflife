@@ -10,6 +10,8 @@ import 'settings_repo.dart';
 import 'settings_repo_impl.dart';
 import 'recipe_repo.dart';
 import 'recipe_repo_impl.dart';
+import 'product_repo.dart';
+import 'product_repo_firebase_impl.dart';
 
 /// Service locator.
 ///  • [settings] (device-level, Hive) and [recipes] (static) are ready after
@@ -29,6 +31,8 @@ class Services {
   static PantryRepo get pantry => _pantry!;
   static ShoppingRepo get shopping => _shopping!;
   static FavoritesRepo get favorites => _favorites!;
+  /// Shared barcode->product cache (stateless; no per-user binding).
+  static final ProductRepo products = ProductRepoFirebaseImpl();
 
   /// Firebase impls expose these for Piece 5 (live-sync VM subscriptions).
   static PantryRepoFirebaseImpl? get pantryImpl => _pantry;

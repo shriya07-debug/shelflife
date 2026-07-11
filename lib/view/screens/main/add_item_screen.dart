@@ -7,6 +7,7 @@ import '../../../model/enums.dart';
 import '../../../viewmodel/pantry_vm.dart';
 import '../../widgets/main_app_bar.dart';
 import '../../widgets/vm_listener.dart';
+import '../scan/scanner_screen.dart';
 
 class AddItemScreen extends StatefulWidget {
   const AddItemScreen({super.key});
@@ -185,7 +186,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                         color: AppColors.textPri(context),
                       )),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: _openScanner,
                     child: const Row(
                       children: [
                         Icon(Icons.playlist_add, color: AppColors.primaryDark),
@@ -201,7 +202,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              _mode == 0 ? _manualForm(context) : _barcodePlaceholder(context),
+              _mode == 0 ? _manualForm(context) : _barcodeScanPanel(context),
               const SizedBox(height: 24),
               Text('Recently Added',
                   style: TextStyle(
@@ -563,7 +564,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     );
   }
 
-  Widget _barcodePlaceholder(BuildContext context) {
+  Widget _barcodeScanPanel(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -576,7 +577,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
           const Icon(Icons.qr_code_scanner,
               size: 80, color: AppColors.primaryDark),
           const SizedBox(height: 16),
-          Text('Point camera at barcode',
+          Text('Scan a product barcode',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
@@ -584,13 +585,42 @@ class _AddItemScreenState extends State<AddItemScreen> {
               )),
           const SizedBox(height: 8),
           Text(
-            'Scanner will be enabled in a future build.',
+            'Auto-fills from Open Food Facts. Add several in a row.',
             style: TextStyle(color: AppColors.textSec(context), fontSize: 13),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _openScanner,
+              icon: const Icon(Icons.camera_alt_outlined),
+              label: const Text('Open Scanner'),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _openScanner() async {
+    final result = await Navigator.push<ScanPrefill>(
+      context,
+      MaterialPageRoute(builder: (_) => const ScannerScreen()),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      if (result.name != null) _nameCtrl.text = result.name!;
+      if (result.category != null &&
+          AppCategories.all.contains(result.category)) {
+        _category = result.category!;
+      }
+      if (result.shelfLifeDays != null) {
+        _expiry = DateTime.now().add(Duration(days: result.shelfLifeDays!));
+      }
+      if (result.imageUrl != null) _imageUrlCtrl.text = result.imageUrl!;
+      _mode = 0; // drop into the manual form to finish up
+    });
   }
 
   Widget _recentCard(BuildContext context, String category, String name,

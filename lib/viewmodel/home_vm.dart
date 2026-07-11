@@ -7,6 +7,14 @@ class HomeVM extends ChangeNotifier {
       Services.pantry.getAll().where((i) => i.isActive).toList();
 
   int get totalItems => activeItems.length;
+
+  /// Share of current pantry items that are already past their expiry.
+  double get wastedPercent {
+    final all = activeItems;
+    if (all.isEmpty) return 0;
+    final expired = all.where((i) => i.daysUntilExpiry < 0).length;
+    return expired / all.length * 100;
+  }
   int get expiringSoon =>
       activeItems.where((i) => i.daysUntilExpiry <= 2).length;
 

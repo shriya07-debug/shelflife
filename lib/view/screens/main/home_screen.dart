@@ -174,7 +174,7 @@ class HomeScreen extends StatelessWidget {
                     style: TextStyle(
                         color: AppColors.textSec(context), fontSize: 13)),
                 const SizedBox(height: 8),
-                const Text('14.2%',
+                Text('${homeVM.wastedPercent.toStringAsFixed(1)}%',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w700,

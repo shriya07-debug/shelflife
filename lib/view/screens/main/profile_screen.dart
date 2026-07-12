@@ -153,9 +153,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryDark),
             onPressed: () async {
-              Navigator.pop(context);
+              final navigator = Navigator.of(context);
               await profileVM.logout();
-              // AuthGate returns to the login screen automatically.
+              navigator.popUntil((route) => route.isFirst);
             },
             child: const Text('Log out'),
           ),
@@ -182,11 +182,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               final messenger = ScaffoldMessenger.of(context);
               final navigator = Navigator.of(context);
               final error = await profileVM.deleteAccount();
-              navigator.pop();
               if (error != null) {
+                navigator.pop();
                 messenger.showSnackBar(SnackBar(content: Text(error)));
+                return;
               }
-              // On success, AuthGate returns to the login screen automatically.
+              navigator.popUntil((route) => route.isFirst);
             },
             child: const Text('Delete'),
           ),

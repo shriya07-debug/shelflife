@@ -5,6 +5,9 @@ import 'pantry_vm.dart';
 
 /// Holds form state for the Add Item screen.
 class AddItemVM extends ChangeNotifier {
+  AddItemVM({PantryVM? pantryVm}) : _pantryVm = pantryVm ?? pantryVM;
+  final PantryVM _pantryVm;
+
   String name = '';
   double quantity = 1;
   String unitCode = 'unit';
@@ -50,7 +53,7 @@ class AddItemVM extends ChangeNotifier {
     notifyListeners();
   }
 
-  PantryItem? findDuplicate() => pantryVM.findDuplicate(name);
+  PantryItem? findDuplicate() => _pantryVm.findDuplicate(name);
 
   PantryItem buildItem() {
     final now = DateTime.now();

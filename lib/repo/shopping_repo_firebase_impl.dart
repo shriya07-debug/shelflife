@@ -7,14 +7,14 @@ import 'seed_data.dart';
 
 /// Firestore-backed ShoppingRepo, scoped to users/{uid}/shopping.
 class ShoppingRepoFirebaseImpl implements ShoppingRepo {
-  ShoppingRepoFirebaseImpl(this.uid);
-  final String uid;
+  ShoppingRepoFirebaseImpl(this.uid, {FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  CollectionReference<Map<String, dynamic>> get _col => FirebaseFirestore
-      .instance
-      .collection('users')
-      .doc(uid)
-      .collection('shopping');
+  final String uid;
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _col =>
+      _firestore.collection('users').doc(uid).collection('shopping');
 
   final Map<String, Map<String, dynamic>> _cache = {};
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _sub;
@@ -74,7 +74,7 @@ class ShoppingRepoFirebaseImpl implements ShoppingRepo {
     final ids = _cache.keys.toList();
     _cache.clear();
     _tick();
-    final batch = FirebaseFirestore.instance.batch();
+    final batch = _firestore.batch();
     for (final id in ids) {
       batch.delete(_col.doc(id));
     }
@@ -82,7 +82,7 @@ class ShoppingRepoFirebaseImpl implements ShoppingRepo {
   }
 
   Future<void> seedFromDefaults() async {
-    final batch = FirebaseFirestore.instance.batch();
+    final batch = _firestore.batch();
     for (final entry in SeedData.shopping) {
       final m = Map<String, dynamic>.from(entry);
       _cache[m['id'] as String] = m;

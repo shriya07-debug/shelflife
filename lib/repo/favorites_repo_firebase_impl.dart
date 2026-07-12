@@ -6,15 +6,16 @@ import 'seed_data.dart';
 
 /// Firestore-backed FavoritesRepo, scoped to users/{uid}/favorites.
 /// Each favorited recipe is a doc whose id is the recipeId.
-class FavoritesRepoFirebaseImpl implements FavoritesRepo {
-  FavoritesRepoFirebaseImpl(this.uid);
-  final String uid;
+///
+ class FavoritesRepoFirebaseImpl implements FavoritesRepo {
+  FavoritesRepoFirebaseImpl(this.uid, {FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  CollectionReference<Map<String, dynamic>> get _col => FirebaseFirestore
-      .instance
-      .collection('users')
-      .doc(uid)
-      .collection('favorites');
+  final String uid;
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _col =>
+      _firestore.collection('users').doc(uid).collection('favorites');
 
   final Set<String> _ids = {};
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _sub;
@@ -69,7 +70,7 @@ class FavoritesRepoFirebaseImpl implements FavoritesRepo {
     final ids = _ids.toList();
     _ids.clear();
     _tick();
-    final batch = FirebaseFirestore.instance.batch();
+    final batch = _firestore.batch();
     for (final id in ids) {
       batch.delete(_col.doc(id));
     }
@@ -77,7 +78,7 @@ class FavoritesRepoFirebaseImpl implements FavoritesRepo {
   }
 
   Future<void> seedFromDefaults() async {
-    final batch = FirebaseFirestore.instance.batch();
+    final batch = _firestore.batch();
     for (final id in SeedData.favoriteRecipeIds) {
       _ids.add(id);
       batch.set(_col.doc(id), {'fav': true});

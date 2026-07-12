@@ -7,15 +7,17 @@ import 'seed_data.dart';
 
 /// Firestore-backed PantryRepo, scoped to users/{uid}/pantry.
 /// Keeps an in-memory cache so the synchronous read API is preserved.
-class PantryRepoFirebaseImpl implements PantryRepo {
-  PantryRepoFirebaseImpl(this.uid);
-  final String uid;
 
-  CollectionReference<Map<String, dynamic>> get _col => FirebaseFirestore
-      .instance
-      .collection('users')
-      .doc(uid)
-      .collection('pantry');
+class PantryRepoFirebaseImpl implements PantryRepo {
+  PantryRepoFirebaseImpl(this.uid, {FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final String uid;
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _col =>
+      _firestore.collection('users').doc(uid).collection('pantry');
+
 
   final Map<String, Map<String, dynamic>> _cache = {};
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _sub;
@@ -85,7 +87,7 @@ class PantryRepoFirebaseImpl implements PantryRepo {
     final ids = _cache.keys.toList();
     _cache.clear();
     _tick();
-    final batch = FirebaseFirestore.instance.batch();
+    final batch = _firestore.batch();
     for (final id in ids) {
       batch.delete(_col.doc(id));
     }
@@ -94,7 +96,7 @@ class PantryRepoFirebaseImpl implements PantryRepo {
 
   /// First-login seed. Mirrors the Hive impl using the same SeedData.
   Future<void> seedFromDefaults() async {
-    final batch = FirebaseFirestore.instance.batch();
+    final batch = _firestore.batch();
     for (final entry in SeedData.pantry) {
       final m = Map<String, dynamic>.from(entry);
       _cache[m['id'] as String] = m;

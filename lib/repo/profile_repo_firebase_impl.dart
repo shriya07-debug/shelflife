@@ -4,10 +4,12 @@ import 'profile_repo.dart';
 
 /// Firestore-backed profile at users/{uid}/profile/main.
 class ProfileRepoFirebaseImpl implements ProfileRepo {
-  ProfileRepoFirebaseImpl(this.uid);
+  ProfileRepoFirebaseImpl(this.uid, {FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
   final String uid;
+  final FirebaseFirestore _firestore;
 
-  DocumentReference<Map<String, dynamic>> get _doc => FirebaseFirestore.instance
+  DocumentReference<Map<String, dynamic>> get _doc => _firestore
       .collection('users')
       .doc(uid)
       .collection('profile')
@@ -56,18 +58,23 @@ class ProfileRepoFirebaseImpl implements ProfileRepo {
 
   /// Write a profile for [uid] without needing a bound instance (used at signup,
   /// before the service locator has bound the new user).
-  static Future<void> writeFor(String uid, UserProfile p) => FirebaseFirestore
-      .instance
-      .collection('users')
-      .doc(uid)
-      .collection('profile')
-      .doc('main')
-      .set(_toMap(p));
+static Future<void> writeFor(
+String uid,
+UserProfile p, {
+FirebaseFirestore? firestore,
+}) =>
+(firestore ?? FirebaseFirestore.instance)
+.collection('users')
+.doc(uid)
+.collection('profile')
+.doc('main')
+.set(_toMap(p));
 
-  /// Delete the profile + first-launch flag for [uid] (account deletion).
-  static Future<void> purgeFor(String uid) async {
-    final u = FirebaseFirestore.instance.collection('users').doc(uid);
-    await u.collection('meta').doc('flags').delete();
-    await u.collection('profile').doc('main').delete();
-  }
+/// Delete the profile + first-launch flag for [uid] (account deletion).
+static Future<void> purgeFor(String uid, {FirebaseFirestore? firestore}) async {
+  final fs = firestore ?? FirebaseFirestore.instance;
+  final u = fs.collection('users').doc(uid);
+  await u.collection('meta').doc('flags').delete();
+  await u.collection('profile').doc('main').delete();
+}
 }

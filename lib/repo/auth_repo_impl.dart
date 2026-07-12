@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_repo.dart';
 
+
 class AuthRepoImpl implements AuthRepo {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+AuthRepoImpl({FirebaseAuth? auth}) : _auth = auth ?? FirebaseAuth.instance;
+final FirebaseAuth _auth;
 
   AuthUser? _map(User? u) => u == null
       ? null

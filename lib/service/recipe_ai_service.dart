@@ -5,7 +5,7 @@ import '../model/recipe.dart';
 
 class RecipeAiService {
   final _model = FirebaseAI.googleAI().generativeModel(
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.1-flash-lite',
   );
 
   Future<Recipe?> generateRecipe(List<String> pantryItems) async {

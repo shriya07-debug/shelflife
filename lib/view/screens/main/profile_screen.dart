@@ -6,9 +6,10 @@ import '../../../viewmodel/profile_vm.dart';
 import '../../../viewmodel/pantry_vm.dart';
 import '../../../viewmodel/auth_vm.dart';
 import '../../widgets/main_app_bar.dart';
-import '../../widgets/vm_listener.dart';
 import '../misc/edit_profile_screen.dart';
 import '../misc/privacy_screen.dart';
+import 'package:provider/provider.dart';
+import '../auth/auth_gate.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,123 +22,126 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // context.watch rebuilds this widget whenever these VMs notify —
+    // this replaces the old VMListener(listenable: Listenable.merge([...])).
+    final profileVM = context.watch<ProfileVM>();
+    final pantryVM = context.watch<PantryVM>();
+    final authVM = context.watch<AuthVM>();
+
+    final darkOn = profileVM.darkMode;
+
     return Scaffold(
       appBar: const MainAppBar(),
-      body: VMListener(
-        listenable: Listenable.merge([profileVM, pantryVM]),
-        builder: (ctx) {
-          final darkOn = profileVM.darkMode;
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-            children: [
-              _avatar(),
-              const SizedBox(height: 12),
-              Center(
-                child: Text(authVM.currentUser?.displayName ?? AppStrings.userName,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPri(context),
-                    )),
-              ),
-              Center(
-                child: Text(authVM.currentUser?.email ?? AppStrings.userEmail,
-                    style: TextStyle(
-                        color: AppColors.textSec(context), fontSize: 14)),
-              ),
-              const SizedBox(height: 20),
-              _settingsCard(context, darkOn),
-              const SizedBox(height: 14),
-              _dietaryCard(context),
-              const SizedBox(height: 14),
-              _allergiesCard(context),
-              const SizedBox(height: 14),
-              _analyticsCard(context),
-              const SizedBox(height: 14),
-              _navTile(context, Icons.manage_accounts, 'Edit Profile Details',
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        children: [
+          _avatar(),
+          const SizedBox(height: 12),
+          Center(
+            child: Text(authVM.currentUser?.displayName ?? AppStrings.userName,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPri(context),
+                )),
+          ),
+          Center(
+            child: Text(authVM.currentUser?.email ?? AppStrings.userEmail,
+                style: TextStyle(
+                    color: AppColors.textSec(context), fontSize: 14)),
+          ),
+          const SizedBox(height: 20),
+          _settingsCard(context, darkOn),
+          const SizedBox(height: 14),
+          _dietaryCard(context),
+          const SizedBox(height: 14),
+          _allergiesCard(context),
+          const SizedBox(height: 14),
+          _analyticsCard(context, pantryVM),
+          const SizedBox(height: 14),
+          _navTile(context, Icons.manage_accounts, 'Edit Profile Details',
                   () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (_) => const EditProfileScreen()),
+                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
                 );
               }),
-              const SizedBox(height: 10),
-              _navTile(context, Icons.shield_outlined, 'Privacy & Data',
-                  () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const PrivacyScreen()),
-                );
-              }),
-              const SizedBox(height: 10),
-              _navTile(context, Icons.restart_alt, 'Reset Demo Data', () {
-                _showResetDialog(context);
-              }),
-              const SizedBox(height: 20),
-              // ---- Log Out ----
-              GestureDetector(
-                onTap: () => _confirmLogout(context),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.logout, color: AppColors.primaryDark),
-                      SizedBox(width: 8),
-                      Text('Log Out',
-                          style: TextStyle(
-                            color: AppColors.primaryDark,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                          )),
-                    ],
-                  ),
-                ),
+          const SizedBox(height: 10),
+          _navTile(context, Icons.shield_outlined, 'Privacy & Data', () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PrivacyScreen()),
+            );
+          }),
+          const SizedBox(height: 10),
+          _navTile(context, Icons.restart_alt, 'Reset Demo Data', () {
+            _showResetDialog(context);
+          }),
+          const SizedBox(height: 20),
+          // ---- Log Out ----
+          GestureDetector(
+            onTap: () => _confirmLogout(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(28),
               ),
-              const SizedBox(height: 10),
-              // ---- Delete Account ----
-              GestureDetector(
-                onTap: () => _confirmDeleteAccount(context),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.danger.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.delete_outline, color: AppColors.danger),
-                      SizedBox(width: 8),
-                      Text('Delete Account',
-                          style: TextStyle(
-                            color: AppColors.danger,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                          )),
-                    ],
-                  ),
-                ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.logout, color: AppColors.primaryDark),
+                  SizedBox(width: 8),
+                  Text('Log Out',
+                      style: TextStyle(
+                        color: AppColors.primaryDark,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      )),
+                ],
               ),
-              const SizedBox(height: 12),
-              Center(
-                child: Text('ShelfLife Version 4.0.0',
-                    style: TextStyle(
-                        color: AppColors.textMut(context), fontSize: 12)),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // ---- Delete Account ----
+          GestureDetector(
+            onTap: () => _confirmDeleteAccount(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: AppColors.danger.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(28),
               ),
-            ],
-          );
-        },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.delete_outline, color: AppColors.danger),
+                  SizedBox(width: 8),
+                  Text('Delete Account',
+                      style: TextStyle(
+                        color: AppColors.danger,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      )),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: Text('ShelfLife Version 4.0.0',
+                style: TextStyle(
+                    color: AppColors.textMut(context), fontSize: 12)),
+          ),
+        ],
       ),
     );
   }
 
   void _confirmLogout(BuildContext context) {
+    // Grab the VM once via read() before the async gap / dialog closes,
+    // since context won't be safe to use for provider lookups afterward.
+    final profileVM = context.read<ProfileVM>();
     showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
@@ -153,9 +157,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryDark),
             onPressed: () async {
-              final navigator = Navigator.of(context);
-              await profileVM.logout();
-              navigator.popUntil((route) => route.isFirst);
+              final navigator = Navigator.of(context, rootNavigator: true);
+              try {
+                await profileVM.logout();
+                navigator.popUntil((route) => route.isFirst);
+    } catch (e, st) {
+    debugPrint('Logout failed: $e\n$st');
+    }
+
             },
             child: const Text('Log out'),
           ),
@@ -165,6 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _confirmDeleteAccount(BuildContext context) {
+    final profileVM = context.read<ProfileVM>();
     showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
@@ -197,6 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showResetDialog(BuildContext context) {
+    final profileVM = context.read<ProfileVM>();
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -297,7 +308,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               Switch(
                 value: darkOn,
-                onChanged: (v) => profileVM.setDarkMode(v),
+                onChanged: (v) => context.read<ProfileVM>().setDarkMode(v),
                 activeThumbColor: AppColors.primary,
               ),
             ],
@@ -414,7 +425,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _analyticsCard(BuildContext context) {
+  Widget _analyticsCard(BuildContext context, PantryVM pantryVM) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -473,7 +484,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   return Text(labels[v.toInt()],
                                       style: TextStyle(
                                         color:
-                                            AppColors.textSec(context),
+                                        AppColors.textSec(context),
                                         fontSize: 11,
                                       ));
                                 },
@@ -528,7 +539,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               sectionsSpace: 0,
                               centerSpaceRadius: 30,
                               startDegreeOffset: 270,
-                              sections: _pieSections(),
+                              sections: _pieSections(context, pantryVM),
                             ),
                           ),
                           Column(
@@ -544,7 +555,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   style: TextStyle(
                                       fontSize: 10,
                                       color:
-                                          AppColors.textSec(context))),
+                                      AppColors.textSec(context))),
                             ],
                           ),
                         ],
@@ -572,7 +583,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  List<PieChartSectionData> _pieSections() {
+  List<PieChartSectionData> _pieSections(
+      BuildContext context, PantryVM pantryVM) {
     final items = pantryVM.active;
     if (items.isEmpty) {
       return [

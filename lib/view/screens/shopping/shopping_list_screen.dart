@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../constants/app_colors.dart';
 import '../../../model/shopping_item.dart';
 import '../../../viewmodel/shopping_vm.dart';
 import '../../widgets/app_logo.dart';
-import '../../widgets/vm_listener.dart';
 
 class ShoppingListScreen extends StatelessWidget {
   const ShoppingListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // context.watch rebuilds this widget whenever ShoppingVM notifies —
+    // this replaces the two VMListener(listenable: shoppingVM) wrappers
+    // plus the implicit dependency on the global shoppingVM singleton.
+    final shoppingVM = context.watch<ShoppingVM>();
+    final items = shoppingVM.all;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       appBar: AppBar(
@@ -28,132 +34,117 @@ class ShoppingListScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: VMListener(
-        listenable: shoppingVM,
-        builder: (ctx) {
-          final items = shoppingVM.all;
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Shopping List',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPri(context),
-                        )),
-                    Text(
-                        '${items.length} items • ${shoppingVM.checkedCount} ticked',
-                        style: TextStyle(
-                            color: AppColors.textSec(context), fontSize: 13)),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: items.isEmpty
-                    ? _emptyState(context)
-                    : ListView.separated(
-                        padding:
-                            const EdgeInsets.fromLTRB(20, 12, 20, 100),
-                        itemCount: items.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: 10),
-                        itemBuilder: (_, i) {
-                          final item = items[i];
-                          return Dismissible(
-                            key: ValueKey(item.id),
-                            direction: DismissDirection.endToStart,
-                            background: Container(
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 24),
-                              decoration: BoxDecoration(
-                                color: AppColors.danger,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Icon(Icons.delete, color: Colors.white),
-                                  SizedBox(width: 8),
-                                  Text('Remove',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                      )),
-                                ],
-                              ),
-                            ),
-                            onDismissed: (_) {
-                              shoppingVM.delete(item.id);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content:
-                                      Text('${item.name} removed.'),
-                                  action: SnackBarAction(
-                                    label: 'UNDO',
-                                    onPressed: () =>
-                                        shoppingVM.add(item),
-                                  ),
-                                ),
-                              );
-                            },
-                            child: _tile(context, item),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          );
-        },
-      ),
-      bottomNavigationBar: VMListener(
-        listenable: shoppingVM,
-        builder: (ctx) {
-          final count = shoppingVM.checkedCount;
-          return Container(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-            color: AppColors.bg(context),
-            child: SafeArea(
-              top: false,
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  if (count == 0) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              'Tick items first to add them to pantry.')),
-                    );
-                    return;
-                  }
-                  final moved = await shoppingVM.moveCheckedToPantry();
-                  if (context.mounted) {
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Shopping List',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPri(context),
+                    )),
+                Text('${items.length} items • ${shoppingVM.checkedCount} ticked',
+                    style: TextStyle(
+                        color: AppColors.textSec(context), fontSize: 13)),
+              ],
+            ),
+          ),
+          Expanded(
+            child: items.isEmpty
+                ? _emptyState(context)
+                : ListView.separated(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+              itemCount: items.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (_, i) {
+                final item = items[i];
+                return Dismissible(
+                  key: ValueKey(item.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 24),
+                    decoration: BoxDecoration(
+                      color: AppColors.danger,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Icon(Icons.delete, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text('Remove',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            )),
+                      ],
+                    ),
+                  ),
+                  onDismissed: (_) {
+                    // one-off action outside build's reactive read
+                    context.read<ShoppingVM>().delete(item.id);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                          content:
-                              Text('$moved item(s) added to pantry.')),
+                        content: Text('${item.name} removed.'),
+                        action: SnackBarAction(
+                          label: 'UNDO',
+                          onPressed: () =>
+                              context.read<ShoppingVM>().add(item),
+                        ),
+                      ),
                     );
-                  }
-                },
-                icon: const Icon(Icons.kitchen),
-                label: Text(count > 0
-                    ? 'Add $count item(s) to Pantry'
-                    : 'Add Checked Items to Pantry'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryDark,
-                ),
-              ),
+                  },
+                  child: _tile(context, item),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        color: AppColors.bg(context),
+        child: SafeArea(
+          top: false,
+          child: ElevatedButton.icon(
+            onPressed: () async {
+              final vm = context.read<ShoppingVM>();
+              if (shoppingVM.checkedCount == 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content:
+                      Text('Tick items first to add them to pantry.')),
+                );
+                return;
+              }
+              final moved = await vm.moveCheckedToPantry();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('$moved item(s) added to pantry.')),
+                );
+              }
+            },
+            icon: const Icon(Icons.kitchen),
+            label: Text(shoppingVM.checkedCount > 0
+                ? 'Add ${shoppingVM.checkedCount} item(s) to Pantry'
+                : 'Add Checked Items to Pantry'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryDark,
+            ),
+          ),
+        ),
       ),
     );
   }
 
   Widget _tile(BuildContext context, ShoppingItem item) {
+    final shoppingVM = context.read<ShoppingVM>();
     return InkWell(
       onTap: () => shoppingVM.toggleChecked(item),
       borderRadius: BorderRadius.circular(12),
@@ -187,7 +178,7 @@ class ShoppingListScreen extends StatelessWidget {
                           ? AppColors.textMut(context)
                           : AppColors.textPri(context),
                       decoration:
-                          item.checked ? TextDecoration.lineThrough : null,
+                      item.checked ? TextDecoration.lineThrough : null,
                     ),
                   ),
                   if (item.note != null) ...[
@@ -236,6 +227,7 @@ class ShoppingListScreen extends StatelessWidget {
   }
 
   void _addDialog(BuildContext context) {
+    final shoppingVM = context.read<ShoppingVM>();
     final nameCtrl = TextEditingController();
     final noteCtrl = TextEditingController();
     showDialog(
@@ -253,8 +245,7 @@ class ShoppingListScreen extends StatelessWidget {
             const SizedBox(height: 8),
             TextField(
               controller: noteCtrl,
-              decoration:
-                  const InputDecoration(hintText: 'Note (optional)'),
+              decoration: const InputDecoration(hintText: 'Note (optional)'),
             ),
           ],
         ),

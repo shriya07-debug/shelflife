@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../constants/app_colors.dart';
 import '../../../constants/app_categories.dart';
 import '../../../model/pantry_item.dart';
@@ -7,7 +8,6 @@ import '../../../viewmodel/pantry_vm.dart';
 import '../../../viewmodel/shopping_vm.dart';
 import '../../widgets/main_app_bar.dart';
 import '../../widgets/pantry_item_card.dart';
-import '../../widgets/vm_listener.dart';
 import '../pantry_detail/pantry_item_sheet.dart';
 
 class PantryScreen extends StatefulWidget {
@@ -22,7 +22,7 @@ class _PantryScreenState extends State<PantryScreen> {
   @override
   void initState() {
     super.initState();
-    _searchCtrl.text = pantryVM.query;
+    _searchCtrl.text = context.read<PantryVM>().query;
   }
 
   @override
@@ -33,7 +33,7 @@ class _PantryScreenState extends State<PantryScreen> {
 
   /// Left swipe = delete with undo
   Future<void> _onDelete(PantryItem item) async {
-    await pantryVM.delete(item.id);
+    await context.read<PantryVM>().delete(item.id);
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -41,7 +41,7 @@ class _PantryScreenState extends State<PantryScreen> {
         action: SnackBarAction(
           label: 'UNDO',
           textColor: Colors.white,
-          onPressed: () => pantryVM.add(item),
+          onPressed: () => context.read<PantryVM>().add(item),
         ),
         duration: const Duration(seconds: 4),
       ),
@@ -77,9 +77,9 @@ class _PantryScreenState extends State<PantryScreen> {
 
     if (addToList == null) return false; // user cancelled
 
-    await pantryVM.markFinished(item);
+    await context.read<PantryVM>().markFinished(item);
     if (addToList) {
-      await shoppingVM.add(ShoppingItem(
+      await context.read<ShoppingVM>().add(ShoppingItem(
         id: 's_${DateTime.now().microsecondsSinceEpoch}',
         name: item.name,
         note: 'Finished — restock',
@@ -95,7 +95,7 @@ class _PantryScreenState extends State<PantryScreen> {
           action: SnackBarAction(
             label: 'UNDO',
             textColor: Colors.white,
-            onPressed: () => pantryVM.markActive(item),
+            onPressed: () => context.read<PantryVM>().markActive(item),
           ),
         ),
       );
@@ -105,13 +105,11 @@ class _PantryScreenState extends State<PantryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final pantryVM = context.watch<PantryVM>();
+    final items = pantryVM.filtered;
     return Scaffold(
       appBar: const MainAppBar(),
-      body: VMListener(
-        listenable: pantryVM,
-        builder: (ctx) {
-          final items = pantryVM.filtered;
-          return ListView(
+      body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
             children: [
               TextField(
@@ -204,9 +202,7 @@ class _PantryScreenState extends State<PantryScreen> {
                       child: _swipeWrap(item),
                     )),
             ],
-          );
-        },
-      ),
+          ),
     );
   }
 
@@ -282,12 +278,14 @@ class _PantryScreenState extends State<PantryScreen> {
         item: item,
         showMenu: true,
         onTap: () => showPantryItemSheet(context, existing: item),
-        onFavoriteToggle: () => pantryVM.toggleFavorite(item),
+        onFavoriteToggle: () =>
+            context.read<PantryVM>().toggleFavorite(item),
       ),
     );
   }
 
   Widget _emptyState(BuildContext context) {
+    final pantryVM = context.watch<PantryVM>();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 60),
       child: Column(

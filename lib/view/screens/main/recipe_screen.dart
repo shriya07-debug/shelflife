@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../constants/app_colors.dart';
 import '../../../model/recipe.dart';
 import '../../../viewmodel/recipe_vm.dart';
 import '../../widgets/main_app_bar.dart';
-import '../../widgets/vm_listener.dart';
 import '../recipes/recipe_detail_screen.dart';
 import '../recipes/use_first_recipes_screen.dart';
 import '../recipes/matches_for_you_screen.dart';
@@ -28,28 +28,27 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // context.watch rebuilds this widget whenever RecipeVM notifies —
+    // this replaces the old VMListener(listenable: recipeVM).
+    final recipeVM = context.watch<RecipeVM>();
+
     return Scaffold(
       appBar: const MainAppBar(),
-      body: VMListener(
-        listenable: recipeVM,
-        builder: (ctx) {
-          return Column(
-            children: [
-              _searchBar(context),
-              if (recipeVM.maxMinutes != null) _activeFilterBar(context),
-              Expanded(
-                child: recipeVM.isSearching
-                    ? _searchResults(context)
-                    : _defaultRecipeView(context),
-              ),
-            ],
-          );
-        },
+      body: Column(
+        children: [
+          _searchBar(context, recipeVM),
+          if (recipeVM.maxMinutes != null) _activeFilterBar(context, recipeVM),
+          Expanded(
+            child: recipeVM.isSearching
+                ? _searchResults(context, recipeVM)
+                : _defaultRecipeView(context, recipeVM),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _searchBar(BuildContext context) {
+  Widget _searchBar(BuildContext context, RecipeVM recipeVM) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
       child: TextField(
@@ -96,6 +95,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
   }
 
   void _showTimeFilter(BuildContext context) {
+    // Grab the VM once via read() before opening the sheet — inside the
+    // sheet builder we mutate this same instance directly.
+    final recipeVM = context.read<RecipeVM>();
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.card(context),
@@ -170,7 +172,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     );
   }
 
-  Widget _activeFilterBar(BuildContext context) {
+  Widget _activeFilterBar(BuildContext context, RecipeVM recipeVM) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
       child: Row(
@@ -191,7 +193,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     );
   }
 
-  Widget _searchResults(BuildContext context) {
+  Widget _searchResults(BuildContext context, RecipeVM recipeVM) {
     final results = recipeVM.searchResults;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -238,17 +240,17 @@ class _RecipeScreenState extends State<RecipeScreen> {
           )
         else
           ...results.map((r) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: RecipeMatchCard(recipe: r),
-              )),
+            padding: const EdgeInsets.only(bottom: 10),
+            child: RecipeMatchCard(recipe: r),
+          )),
       ],
     );
   }
 
-  Widget _defaultRecipeView(BuildContext context) {
+  Widget _defaultRecipeView(BuildContext context, RecipeVM recipeVM) {
     final useFirst = recipeVM.useFirst;
     final smallSet =
-        recipeVM.all.where((r) => !r.urgent).take(2).toList();
+    recipeVM.all.where((r) => !r.urgent).take(2).toList();
     final favorites = recipeVM.favorites;
     final matches = recipeVM.matches;
 
@@ -302,21 +304,21 @@ class _RecipeScreenState extends State<RecipeScreen> {
           runSpacing: 8,
           children: [
             ..._selectedIngredients.map((i) => Chip(
-                  label: Text(i,
-                      style: const TextStyle(
-                        color: AppColors.primaryDark,
-                        fontWeight: FontWeight.w600,
-                      )),
-                  backgroundColor: AppColors.primaryLight,
-                  deleteIcon: const Icon(Icons.close,
-                      size: 16, color: AppColors.primaryDark),
-                  onDeleted: () =>
-                      setState(() => _selectedIngredients.remove(i)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide.none,
-                  ),
-                )),
+              label: Text(i,
+                  style: const TextStyle(
+                    color: AppColors.primaryDark,
+                    fontWeight: FontWeight.w600,
+                  )),
+              backgroundColor: AppColors.primaryLight,
+              deleteIcon: const Icon(Icons.close,
+                  size: 16, color: AppColors.primaryDark),
+              onDeleted: () =>
+                  setState(() => _selectedIngredients.remove(i)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide.none,
+              ),
+            )),
             ActionChip(
               label: Icon(Icons.add,
                   size: 18, color: AppColors.textPri(context)),
@@ -399,9 +401,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
         ),
         const SizedBox(height: 12),
         ...matches.map((r) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: RecipeMatchCard(recipe: r),
-            )),
+          padding: const EdgeInsets.only(bottom: 10),
+          child: RecipeMatchCard(recipe: r),
+        )),
       ],
     );
   }
@@ -450,12 +452,12 @@ class _RecipeScreenState extends State<RecipeScreen> {
             borderRadius: BorderRadius.circular(14),
             child: r.imageAsset != null
                 ? Image.asset(
-                    r.imageAsset!,
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _featuredFallback(),
-                  )
+              r.imageAsset!,
+              height: 200,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _featuredFallback(),
+            )
                 : _featuredFallback(),
           ),
           Positioned.fill(
@@ -538,10 +540,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
             Positioned.fill(
               child: r.imageAsset != null
                   ? Image.asset(
-                      r.imageAsset!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _smallFallback(),
-                    )
+                r.imageAsset!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _smallFallback(),
+              )
                   : _smallFallback(),
             ),
             Positioned.fill(
@@ -605,18 +607,18 @@ class _RecipeScreenState extends State<RecipeScreen> {
                 width: double.infinity,
                 child: r.imageAsset != null
                     ? Image.asset(r.imageAsset!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                              color: AppColors.chipBg(context),
-                              child: Icon(Icons.restaurant,
-                                  color: AppColors.textMut(context),
-                                  size: 32),
-                            ))
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: AppColors.chipBg(context),
+                      child: Icon(Icons.restaurant,
+                          color: AppColors.textMut(context),
+                          size: 32),
+                    ))
                     : Container(
-                        color: AppColors.chipBg(context),
-                        child: Icon(Icons.restaurant,
-                            color: AppColors.textMut(context), size: 32),
-                      ),
+                  color: AppColors.chipBg(context),
+                  child: Icon(Icons.restaurant,
+                      color: AppColors.textMut(context), size: 32),
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../constants/app_colors.dart';
 import '../../../constants/app_categories.dart';
 import '../../../constants/app_units.dart';
@@ -6,7 +7,6 @@ import '../../../model/pantry_item.dart';
 import '../../../model/enums.dart';
 import '../../../viewmodel/pantry_vm.dart';
 import '../../widgets/main_app_bar.dart';
-import '../../widgets/vm_listener.dart';
 import '../scan/scanner_screen.dart';
 
 class AddItemScreen extends StatefulWidget {
@@ -63,6 +63,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
   }
 
   void _save() {
+    // context.read: one-off action, not a build-time subscription.
+    final pantryVM = context.read<PantryVM>();
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -99,6 +101,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   }
 
   void _duplicateDialog(PantryItem newItem, PantryItem existing) {
+    final pantryVM = context.read<PantryVM>();
     showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
@@ -163,133 +166,133 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // context.watch rebuilds this widget whenever PantryVM notifies —
+    // this replaces the old VMListener(listenable: pantryVM) wrapper
+    // plus the implicit dependency on the global pantryVM singleton.
+    final pantryVM = context.watch<PantryVM>();
+    final recent = pantryVM.all.toList()
+      ..sort((a, b) => b.addedDate.compareTo(a.addedDate));
+    final recentTop = recent.take(5).toList();
+
     return Scaffold(
       appBar: const MainAppBar(),
-      body: VMListener(
-        listenable: pantryVM,
-        builder: (ctx) {
-          final recent = pantryVM.all.toList()
-            ..sort((a, b) => b.addedDate.compareTo(a.addedDate));
-          final recentTop = recent.take(5).toList();
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        children: [
+          _modeToggle(context),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _modeToggle(context),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('New Inventory',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPri(context),
-                      )),
-                  GestureDetector(
-                    onTap: _openScanner,
-                    child: const Row(
-                      children: [
-                        Icon(Icons.playlist_add, color: AppColors.primaryDark),
-                        SizedBox(width: 4),
-                        Text('Quick-add mode',
-                            style: TextStyle(
-                              color: AppColors.primaryDark,
-                              fontWeight: FontWeight.w600,
-                            )),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              _mode == 0 ? _manualForm(context) : _barcodeScanPanel(context),
-              const SizedBox(height: 24),
-              Text('Recently Added',
+              Text('New Inventory',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 22,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPri(context),
                   )),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 100,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
+              GestureDetector(
+                onTap: _openScanner,
+                child: const Row(
                   children: [
-                    ...recentTop.map((item) => Padding(
-                          padding: const EdgeInsets.only(right: 10),
-                          child: _recentCard(
-                            context,
-                            item.category,
-                            item.name,
-                            'Qty: ${item.quantityLabel}',
-                            _colorForCategory(item.category),
-                          ),
+                    Icon(Icons.playlist_add, color: AppColors.primaryDark),
+                    SizedBox(width: 4),
+                    Text('Quick-add mode',
+                        style: TextStyle(
+                          color: AppColors.primaryDark,
+                          fontWeight: FontWeight.w600,
                         )),
-                    Container(
-                      width: 130,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.divider(context)),
-                      ),
-                      child: Center(
-                        child: Icon(Icons.add,
-                            color: AppColors.textMut(context), size: 32),
-                      ),
-                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Image.asset(
-                      'assets/onboarding/login_bg.png',
-                      height: 130,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        height: 130,
-                        color: const Color(0xFFCFE7D2),
-                        child: const Center(
-                          child: Icon(Icons.kitchen,
-                              size: 48, color: AppColors.primary),
-                        ),
-                      ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _mode == 0 ? _manualForm(context) : _barcodeScanPanel(context),
+          const SizedBox(height: 24),
+          Text('Recently Added',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPri(context),
+              )),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 100,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                ...recentTop.map((item) => Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: _recentCard(
+                    context,
+                    item.category,
+                    item.name,
+                    'Qty: ${item.quantityLabel}',
+                    _colorForCategory(item.category),
+                  ),
+                )),
+                Container(
+                  width: 130,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.divider(context)),
+                  ),
+                  child: Center(
+                    child: Icon(Icons.add,
+                        color: AppColors.textMut(context), size: 32),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.asset(
+                  'assets/onboarding/login_bg.png',
+                  height: 130,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 130,
+                    color: const Color(0xFFCFE7D2),
+                    child: const Center(
+                      child: Icon(Icons.kitchen,
+                          size: 48, color: AppColors.primary),
                     ),
                   ),
-                  const Positioned(
-                    left: 14, bottom: 14,
-                    child: Text(
-                      'Keep your pantry fresh and organized.',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
+                ),
+              ),
+              const Positioned(
+                left: 14, bottom: 14,
+                child: Text(
+                  'Keep your pantry fresh and organized.',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                   ),
-                  Positioned(
-                    right: 14, bottom: 14,
-                    child: GestureDetector(
-                      onTap: _save,
-                      child: Container(
-                        width: 48, height: 48,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primaryDark,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.check, color: Colors.white),
-                      ),
+                ),
+              ),
+              Positioned(
+                right: 14, bottom: 14,
+                child: GestureDetector(
+                  onTap: _save,
+                  child: Container(
+                    width: 48, height: 48,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryDark,
+                      shape: BoxShape.circle,
                     ),
+                    child: const Icon(Icons.check, color: Colors.white),
                   ),
-                ],
+                ),
               ),
             ],
-          );
-        },
+          ),
+        ],
       ),
     );
   }
@@ -346,7 +349,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
   Widget _manualForm(BuildContext context) {
     final secondary =
-        AppUnits.secondaryDisplay(_qty(), AppUnits.byCode(_unitCode));
+    AppUnits.secondaryDisplay(_qty(), AppUnits.byCode(_unitCode));
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -364,7 +367,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
           TextField(
             controller: _nameCtrl,
             decoration:
-                const InputDecoration(hintText: 'e.g. Fresh Chicken Breast'),
+            const InputDecoration(hintText: 'e.g. Fresh Chicken Breast'),
           ),
           const SizedBox(height: 14),
           _formLabel(context, 'Image URL (optional)'),
@@ -391,7 +394,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                           decimal: true),
                       onChanged: (_) => setState(() {}),
                       decoration:
-                          const InputDecoration(hintText: 'e.g. 500'),
+                      const InputDecoration(hintText: 'e.g. 500'),
                     ),
                   ],
                 ),
@@ -410,7 +413,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       decoration: const InputDecoration(isDense: true),
                       items: AppUnits.all
                           .map((u) => DropdownMenuItem(
-                              value: u.code, child: Text(u.label)))
+                          value: u.code, child: Text(u.label)))
                           .toList(),
                       onChanged: (v) => setState(() => _unitCode = v!),
                     ),
@@ -463,9 +466,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
               decoration: InputDecoration(
                 suffixIcon: _purchase != null
                     ? IconButton(
-                        icon: const Icon(Icons.close, size: 18),
-                        onPressed: () => setState(() => _purchase = null),
-                      )
+                  icon: const Icon(Icons.close, size: 18),
+                  onPressed: () => setState(() => _purchase = null),
+                )
                     : const Icon(Icons.shopping_bag_outlined, size: 18),
               ),
               child: Text(_purchaseText(),

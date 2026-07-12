@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../constants/app_colors.dart';
 import '../../../viewmodel/recipe_vm.dart';
 import '../../widgets/app_logo.dart';
-import '../../widgets/vm_listener.dart';
 import 'recipe_match_card.dart';
 
 class MatchesForYouScreen extends StatelessWidget {
@@ -10,7 +10,12 @@ class MatchesForYouScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // context.watch rebuilds this widget whenever RecipeVM notifies —
+    // this replaces the old VMListener(listenable: recipeVM).
+    final recipeVM = context.watch<RecipeVM>();
+    final recipes = recipeVM.all.where((r) => !r.urgent).toList();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       appBar: AppBar(
@@ -21,31 +26,24 @@ class MatchesForYouScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: VMListener(
-        listenable: recipeVM,
-        builder: (ctx) {
-          final recipes = recipeVM.all.where((r) => !r.urgent).toList();
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-            children: [
-              Text('Matches for you',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPri(context),
-                  )),
-              const SizedBox(height: 4),
-              Text('Recipes that match your selected ingredients.',
-                  style: TextStyle(
-                      color: AppColors.textSec(context), fontSize: 13)),
-              const SizedBox(height: 16),
-              ...recipes.map((r) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: RecipeMatchCard(recipe: r),
-                  )),
-            ],
-          );
-        },
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        children: [
+          Text('Matches for you',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPri(context),
+              )),
+          const SizedBox(height: 4),
+          Text('Recipes that match your selected ingredients.',
+              style: TextStyle(color: AppColors.textSec(context), fontSize: 13)),
+          const SizedBox(height: 16),
+          ...recipes.map((r) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: RecipeMatchCard(recipe: r),
+          )),
+        ],
       ),
     );
   }

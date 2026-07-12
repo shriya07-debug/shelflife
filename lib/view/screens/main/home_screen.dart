@@ -1,11 +1,11 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../constants/app_colors.dart';
 import '../../../viewmodel/home_vm.dart';
 import '../../../viewmodel/pantry_vm.dart';
 import '../../widgets/main_app_bar.dart';
 import '../../widgets/pantry_item_card.dart';
-import '../../widgets/vm_listener.dart';
 import '../pantry_detail/pantry_item_sheet.dart';
 import '../recipes/use_first_all_screen.dart';
 
@@ -14,123 +14,124 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // context.watch rebuilds this widget whenever these VMs notify —
+    // this replaces the old VMListener(listenable: pantryVM) plus the
+    // implicit dependency on the global homeVM singleton.
+    context.watch<PantryVM>(); // triggers rebuild on pantry changes
+    final homeVM = context.watch<HomeVM>();
+
     return Scaffold(
       appBar: const MainAppBar(),
-      body: VMListener(
-        listenable: pantryVM,
-        builder: (ctx) {
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        children: [
+          Text('Pantry Insights',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPri(context),
+              )),
+          const SizedBox(height: 12),
+          Row(
             children: [
-              Text('Pantry Insights',
+              Expanded(
+                child: _statCard(
+                  context,
+                  label: 'Total Items',
+                  value: '${homeVM.totalItems}',
+                  trailing: const Row(
+                    children: [
+                      Icon(Icons.trending_up,
+                          color: AppColors.safe, size: 16),
+                      SizedBox(width: 4),
+                      Text('+12%',
+                          style: TextStyle(
+                            color: AppColors.safe,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          )),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _statCard(
+                  context,
+                  label: 'Expiring Soon',
+                  value: homeVM.expiringSoon.toString().padLeft(2, '0'),
+                  valueColor: AppColors.warning,
+                  trailing: Text('Next 48h',
+                      style: TextStyle(
+                          color: AppColors.textSec(context),
+                          fontSize: 12)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _wasteCard(context, homeVM),
+          const SizedBox(height: 16),
+          _suggestedGroceriesCard(context, homeVM),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Use First',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPri(context),
                   )),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _statCard(
-                      context,
-                      label: 'Total Items',
-                      value: '${homeVM.totalItems}',
-                      trailing: const Row(
-                        children: [
-                          Icon(Icons.trending_up,
-                              color: AppColors.safe, size: 16),
-                          SizedBox(width: 4),
-                          Text('+12%',
-                              style: TextStyle(
-                                color: AppColors.safe,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              )),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _statCard(
-                      context,
-                      label: 'Expiring Soon',
-                      value: homeVM.expiringSoon.toString().padLeft(2, '0'),
-                      valueColor: AppColors.warning,
-                      trailing: Text('Next 48h',
-                          style: TextStyle(
-                              color: AppColors.textSec(context),
-                              fontSize: 12)),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              _wasteCard(context),
-              const SizedBox(height: 16),
-              _suggestedGroceriesCard(context),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Use First',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPri(context),
-                      )),
-                  GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const UseFirstAllScreen()),
-                    ),
-                    child: const Text('View All',
-                        style: TextStyle(
-                          color: AppColors.primaryDark,
-                          fontWeight: FontWeight.w600,
-                        )),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (homeVM.useFirst.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.card(context),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'No items in pantry yet. Add some!',
-                      style: TextStyle(color: AppColors.textSec(context)),
-                    ),
-                  ),
-                )
-              else
-                ...homeVM.useFirst.map((item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: PantryItemCard(
-                        item: item,
-                        compact: true,
-                        onTap: () =>
-                            showPantryItemSheet(context, existing: item),
-                      ),
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const UseFirstAllScreen()),
+                ),
+                child: const Text('View All',
+                    style: TextStyle(
+                      color: AppColors.primaryDark,
+                      fontWeight: FontWeight.w600,
                     )),
+              ),
             ],
-          );
-        },
+          ),
+          const SizedBox(height: 12),
+          if (homeVM.useFirst.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.card(context),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Center(
+                child: Text(
+                  'No items in pantry yet. Add some!',
+                  style: TextStyle(color: AppColors.textSec(context)),
+                ),
+              ),
+            )
+          else
+            ...homeVM.useFirst.map((item) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: PantryItemCard(
+                item: item,
+                compact: true,
+                onTap: () =>
+                    showPantryItemSheet(context, existing: item),
+              ),
+            )),
+        ],
       ),
     );
   }
 
   Widget _statCard(BuildContext context,
       {required String label,
-      required String value,
-      Color? valueColor,
-      Widget? trailing}) {
+        required String value,
+        Color? valueColor,
+        Widget? trailing}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -157,7 +158,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _wasteCard(BuildContext context) {
+  Widget _wasteCard(BuildContext context, HomeVM homeVM) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -229,7 +230,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _suggestedGroceriesCard(BuildContext context) {
+  Widget _suggestedGroceriesCard(BuildContext context, HomeVM homeVM) {
     final suggestions = homeVM.suggestions;
     return Container(
       padding: const EdgeInsets.all(16),

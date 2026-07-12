@@ -4,18 +4,12 @@ import '../screens/main/main_shell.dart';
 
 class ShelfBottomNav extends StatelessWidget {
   final int currentIndex;
-  const ShelfBottomNav({super.key, required this.currentIndex});
+  final ValueChanged<int> onTap;
+  const ShelfBottomNav({super.key, required this.currentIndex, required this.onTap});
 
   void _go(BuildContext context, int index) {
     if (index == currentIndex) return;
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => MainShell(initialIndex: index),
-        transitionDuration: Duration.zero,
-        reverseTransitionDuration: Duration.zero,
-      ),
-    );
+    onTap(index);
   }
 
   @override

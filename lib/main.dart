@@ -7,6 +7,14 @@ import 'view/theme/app_theme.dart';
 import 'view/theme/theme_controller.dart';
 import 'repo/services.dart';
 import 'view/screens/misc/splash_screen.dart';
+import 'package:provider/provider.dart';
+import 'viewmodel/auth_vm.dart';
+import 'viewmodel/home_vm.dart';
+import 'viewmodel/pantry_vm.dart';
+import 'viewmodel/shopping_vm.dart';
+import 'viewmodel/recipe_vm.dart';
+import 'viewmodel/profile_vm.dart';
+import 'viewmodel/add_item_vm.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +35,20 @@ Future<void> main() async {
   // Restore saved dark-mode preference
   themeController.value =
   Services.settings.darkMode ? ThemeMode.dark : ThemeMode.light;
-  runApp(const ShelfLifeApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: authVM),
+        ChangeNotifierProvider.value(value: homeVM),
+        ChangeNotifierProvider.value(value: pantryVM),
+        ChangeNotifierProvider.value(value: shoppingVM),
+        ChangeNotifierProvider.value(value: recipeVM),
+        ChangeNotifierProvider.value(value: profileVM),
+        ChangeNotifierProvider.value(value: addItemVM),
+      ],
+      child: const ShelfLifeApp(),
+    ),
+  );
 }
 
 class ShelfLifeApp extends StatelessWidget {

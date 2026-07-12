@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../model/recipe.dart';
 import '../repo/services.dart';
+import '../service/recipe_ai_service.dart';
 
 class RecipeVM extends ChangeNotifier {
   String _query = '';
@@ -60,6 +61,25 @@ class RecipeVM extends ChangeNotifier {
       }
       return false;
     }).toList();
+  }
+
+  // ---- AI Recipe Generation -------------------------------------------
+  final _aiService = RecipeAiService();
+  bool isGeneratingAi = false;
+  String? aiError;
+
+  Future<Recipe?> generateAiRecipe(List<String> ingredients) async {
+    isGeneratingAi = true;
+    aiError = null;
+    notifyListeners();
+
+    final recipe = await _aiService.generateRecipe(ingredients);
+
+    isGeneratingAi = false;
+    if (recipe == null) aiError = 'Could not generate a recipe. Try again.';
+    notifyListeners();
+
+    return recipe;
   }
 }
 

@@ -331,6 +331,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        _aiGenerateButton(context, recipeVM),
         const SizedBox(height: 24),
         // Favorites section
         Row(
@@ -406,6 +408,60 @@ class _RecipeScreenState extends State<RecipeScreen> {
         )),
       ],
     );
+  }
+
+  // ── AI Recipe Generation ────────────────────────────────────────────
+
+  Widget _aiGenerateButton(BuildContext context, RecipeVM recipeVM) {
+    final disabled = recipeVM.isGeneratingAi || _selectedIngredients.isEmpty;
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: disabled ? null : () => _handleAiGenerate(recipeVM),
+        icon: recipeVM.isGeneratingAi
+            ? const SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Colors.white,
+          ),
+        )
+            : const Icon(Icons.auto_awesome, size: 20),
+        label: Text(
+          recipeVM.isGeneratingAi
+              ? 'Generating...'
+              : 'Generate Recipe with AI',
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.chipUnsel(context),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleAiGenerate(RecipeVM recipeVM) async {
+    final recipe = await recipeVM.generateAiRecipe(_selectedIngredients);
+    if (!mounted) return;
+
+    if (recipe != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => RecipeDetailScreen(recipe: recipe)),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(recipeVM.aiError ?? 'Could not generate a recipe.'),
+        ),
+      );
+    }
   }
 
   void _addIngredientDialog() {
